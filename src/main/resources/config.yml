@@ -1,0 +1,13 @@
+#  ___                  _       _       _   ___ ___
+# / __|_ __ _ _ ___  __| |_____| |_    /_\ | _ \_ _|
+# \__ \ '_ \ '_/ _ \/ _| / / -_)  _|  / _ \|  _/| |
+# |___/ .__/_| \___/\__|_\_\___|\__| /_/ \_\_| |___|
+#     |_|
+
+# Change this port to make the web-server run at a different port default being '8080'.
+# Remember a change in this might necessitate a change in the client config for webserver path.
+port: 8080
+
+# This is the API key, change this to a secure string.
+# if left unchanged or insecure anyone can interact with your server.
+apikey: "change-me"

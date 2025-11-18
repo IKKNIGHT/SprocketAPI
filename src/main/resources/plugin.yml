@@ -5,3 +5,7 @@ api-version: '1.21'
 prefix: Sprocket-API
 authors: [ IK_Knight ]
 description: Web-based API to interact with minecraft's Spigot API
+commands:
+  reloadsprocket:
+    description: reloads this plugins configuration (OP Required)
+    usage: /<command>
