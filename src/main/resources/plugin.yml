@@ -1,0 +1,7 @@
+name: SprocketAPI
+version: '1.0-SNAPSHOT'
+main: ikknight.tech.sprocketAPI.SprocketAPI
+api-version: '1.21'
+prefix: Sprocket-API
+authors: [ IK_Knight ]
+description: Web-based API to interact with minecraft's Spigot API
