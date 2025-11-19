@@ -9,17 +9,19 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReloadSprocketAPI implements CommandExecutor {
     SprocketAPI s;
-    public ReloadSprocketAPI(SprocketAPI s){
+
+    public ReloadSprocketAPI(SprocketAPI s) {
         this.s = s;
     }
+
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (sender.isOp()){
-            sender.sendMessage(ChatColor.YELLOW+" Reloading Server...");
+        if (sender.isOp()) {
+            sender.sendMessage(ChatColor.YELLOW + " Reloading Server...");
             s.onDisable();
             s.onEnable();
-            sender.sendMessage(ChatColor.GREEN+" Reload Successful!");
-        }else{
+            sender.sendMessage(ChatColor.GREEN + " Reload Successful!");
+        } else {
             sender.sendMessage("You do not have permissions to run this command.");
         }
 
