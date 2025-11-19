@@ -128,11 +128,13 @@ public class ApiServer extends NanoHTTPD {
         public final String ip;
         public final int port;
         public final long connectionThrottle;
+        public final double tps;
 
         public NetworkInfoResponse(ServerSnapshot s) {
             this.ip = s.getIp();
             this.port = s.getPort();
             this.connectionThrottle = s.getConnectionThrottle();
+            this.tps = s.getTps();
         }
     }
 }

@@ -12,10 +12,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.IOException;
 
 public final class SprocketAPI extends JavaPlugin {
-    public static double Tps;
+    public static double Tps = 20.0;
     PluginDescriptionFile pdfFile;
     // Bukkit.getServer().reload();
-    public static volatile ServerSnapshot snapshot;
+    public static volatile ServerSnapshot snapshot = new ServerSnapshot();
     private ApiServer api;
 
     public PluginDescriptionFile getPdfFile() {
@@ -47,27 +47,37 @@ public final class SprocketAPI extends JavaPlugin {
         }
     }
 
-    public void apiTick(){
+    public void apiTick() {
+
+        // Every tick: record timestamp
         Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
-            // schedule tasks to run every tick (1/20 of a second), run lightweight
-            // tasks here.
-            tickTimes[tickIndex % tickTimes.length] = System.currentTimeMillis();
+            tickTimes[tickIndex % tickTimes.length] = System.nanoTime();
             tickIndex++;
-            snapshot.update(getServer(),Tps);
-        }, 0L, 1L); // Run every tick
+
+            snapshot.update(getServer(), Tps);
+
+        }, 0L, 1L);
+
+        // Every second: compute TPS
         Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
-            // schedule tasks to run every second, run heavy tasks here
-            int targetTicks = 20; // Calculate TPS over the last 20 ticks
+
+            int targetTicks = 20;
+
             if (tickIndex < targetTicks) {
-                Tps = 20.0; // Not enough data yet, assume perfect TPS
+                Tps = 20.0;
+                return;
             }
 
-            long oldestTickTime = tickTimes[(tickIndex - targetTicks) % tickTimes.length];
-            long latestTickTime = tickTimes[(tickIndex - 1) % tickTimes.length];
+            int newest = (tickIndex - 1) % tickTimes.length;
+            int oldest = (tickIndex - targetTicks) % tickTimes.length;
 
-            double elapsedMillis = latestTickTime - oldestTickTime;
-            Tps = (double) targetTicks / (elapsedMillis / 1000.0);
-        }, 200L, 20L); // Calculate every second (20 ticks)
+            long elapsed = tickTimes[newest] - tickTimes[oldest];
+            Tps = targetTicks / (elapsed / 1_000_000_000.0);
+
+            // Cap TPS at 20 because Minecraft never exceeds 20 logically
+            if (Tps > 20.0) Tps = 20.0;
+
+        }, 20L, 20L);
     }
 
     public void configureFile() {
