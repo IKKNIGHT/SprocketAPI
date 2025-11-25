@@ -47,6 +47,8 @@ public class ServerSnapshot {
     private Set<String> bannedPlayers;
     private List<String> worlds;
 
+    private String defaultGameMode;
+
     // ============================================================
     //                     UPDATE SNAPSHOT
     // ============================================================
@@ -55,6 +57,7 @@ public class ServerSnapshot {
      * Must be called on the Bukkit main thread!
      */
     public void update(Server server, double currentTps) {
+        this.defaultGameMode = server.getDefaultGameMode().name();
         this.timestamp = System.currentTimeMillis();
         this.tps = currentTps;
 
@@ -116,6 +119,10 @@ public class ServerSnapshot {
     public long getTimestamp() {
         return timestamp;
     }
+    public String getDefaultGameMode(){
+        return defaultGameMode;
+    }
+
 
     public String getName() {
         return name;

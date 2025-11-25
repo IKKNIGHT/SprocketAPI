@@ -3,10 +3,15 @@ package ikknight.tech.sprocketAPI.server;
 import com.google.gson.Gson;
 import fi.iki.elonen.NanoHTTPD;
 import ikknight.tech.sprocketAPI.SprocketAPI;
+import org.bukkit.GameMode;
+
+import java.util.List;
+import java.util.Map;
 
 public class ApiServer extends NanoHTTPD {
 
     private final Gson gson = new Gson();
+
 
     public ApiServer(int port) {
         super(port);
@@ -14,8 +19,10 @@ public class ApiServer extends NanoHTTPD {
 
     @Override
     public Response serve(IHTTPSession session) {
-        String uri = session.getUri();
+        String uri = session.getUri().toLowerCase();
+        Map<String, List<String>> parms = session.getParameters();
 
+        // added outside so in the future we can check for api keys.
         switch (uri) {
 
             // Health check
@@ -57,7 +64,42 @@ public class ApiServer extends NanoHTTPD {
             // Network info
             case "/api/network":
                 return json(new NetworkInfoResponse(SprocketAPI.snapshot));
+            case "/api/setdefaultgamemode":
+                if (!session.getMethod().equals(Method.POST)) {
+                    return newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED, MIME_PLAINTEXT, "Only POST allowed");
+                }
 
+                try {
+                    // Prepare to parse body
+                    Map<String, String> files = new java.util.HashMap<>();
+                    session.parseBody(files); // <-- important
+
+                    // Get the raw body content
+                    String bodyJson = files.get("postData");
+                    if (bodyJson == null || bodyJson.isEmpty()) {
+                        return newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, "Missing request body");
+                    }
+
+                    // Deserialize JSON
+                    Map<String, String> body = gson.fromJson(bodyJson, Map.class);
+
+                    if (!body.containsKey("gamemode")) {
+                        return newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, "Missing gamemode field");
+                    }
+
+                    String gmStr = body.get("gamemode").toUpperCase();
+                    GameMode gm = GameMode.valueOf(gmStr);
+
+                    SprocketAPI.apiServerWrapper.update(APIServerWrapper.Mutable.DEFAULTGAMEMODE, gm);
+
+                    return newFixedLengthResponse(Response.Status.OK, MIME_PLAINTEXT, "Default gamemode updated to " + gm.name());
+
+                } catch (IllegalArgumentException e) {
+                    return newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, "Invalid gamemode");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, "Error parsing request: " + e.getMessage());
+                }
             default:
                 return newFixedLengthResponse(Response.Status.NOT_FOUND,
                         MIME_PLAINTEXT,
@@ -105,6 +147,7 @@ public class ApiServer extends NanoHTTPD {
         public final int maxChainedNeighborUpdates;
         public final int idleTimeout;
         public final int pauseWhenEmptyTime;
+        public final String defaultGameMode;
 
         public ServerSettingsResponse(ServerSnapshot s) {
             this.allowEnd = s.getAllowEnd();
@@ -121,6 +164,7 @@ public class ApiServer extends NanoHTTPD {
             this.maxChainedNeighborUpdates = s.getMaxChainedNeighborUpdates();
             this.idleTimeout = s.getIdleTimeout();
             this.pauseWhenEmptyTime = s.getPauseWhenEmptyTime();
+            this.defaultGameMode = s.getDefaultGameMode();
         }
     }
 

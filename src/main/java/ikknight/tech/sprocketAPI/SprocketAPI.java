@@ -1,6 +1,8 @@
 package ikknight.tech.sprocketAPI;
 
+import fi.iki.elonen.NanoHTTPD;
 import ikknight.tech.sprocketAPI.commands.ReloadSprocketAPI;
+import ikknight.tech.sprocketAPI.server.APIServerWrapper;
 import ikknight.tech.sprocketAPI.server.ApiServer;
 import ikknight.tech.sprocketAPI.server.ServerSnapshot;
 import ikknight.tech.sprocketAPI.utils.Constants;
@@ -16,6 +18,7 @@ public final class SprocketAPI extends JavaPlugin {
     PluginDescriptionFile pdfFile;
     // Bukkit.getServer().reload();
     public static volatile ServerSnapshot snapshot = new ServerSnapshot();
+    public static volatile APIServerWrapper apiServerWrapper = new APIServerWrapper();
     private ApiServer api;
 
     public PluginDescriptionFile getPdfFile() {
@@ -39,7 +42,7 @@ public final class SprocketAPI extends JavaPlugin {
     public void runAPI() {
         api = new ApiServer(this.getConfig().getInt(Constants.ConfigPaths.PORT));
         try {
-            api.start();
+            api.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
             Bukkit.getServer().getConsoleSender().sendMessage("Configured at port : " + this.getConfig().getInt(Constants.ConfigPaths.PORT));
             Bukkit.getServer().getConsoleSender().sendMessage("The API Key is present in the config.yml");
         } catch (IOException e) {
@@ -54,6 +57,7 @@ public final class SprocketAPI extends JavaPlugin {
             tickTimes[tickIndex % tickTimes.length] = System.nanoTime();
             tickIndex++;
 
+            apiServerWrapper.update(getServer());
             snapshot.update(getServer(), Tps);
 
         }, 0L, 1L);
