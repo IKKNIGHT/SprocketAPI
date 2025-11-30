@@ -5,6 +5,7 @@ import fi.iki.elonen.NanoHTTPD;
 import ikknight.tech.sprocketAPI.SprocketAPI;
 import org.bukkit.GameMode;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -81,14 +82,14 @@ public class ApiServer extends NanoHTTPD {
                     }
 
                     // Deserialize JSON
-                    Map<String, String> body = gson.fromJson(bodyJson, Map.class);
+                    Map<String, Object> body = gson.fromJson(bodyJson, Map.class);
 
                     if (!body.containsKey("gamemode")) {
                         return newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, "Missing gamemode field");
                     }
 
-                    String gmStr = body.get("gamemode").toUpperCase();
-                    GameMode gm = GameMode.valueOf(gmStr);
+                    String gmStr = (String) body.get("gamemode");
+                    GameMode gm = GameMode.valueOf(gmStr.toUpperCase());
 
                     SprocketAPI.apiServerWrapper.update(APIServerWrapper.Mutable.DEFAULTGAMEMODE, gm);
 
@@ -97,6 +98,38 @@ public class ApiServer extends NanoHTTPD {
                 } catch (IllegalArgumentException e) {
                     return newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, "Invalid gamemode");
                 } catch (Exception e) {
+                    e.printStackTrace();
+                    return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, "Error parsing request: " + e.getMessage());
+                }
+            case "/api/setidletimeout":
+                if (!session.getMethod().equals(Method.POST)) {
+                    return newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED, MIME_PLAINTEXT, "Only POST allowed");
+                }
+
+                try{
+                    Map<String, String> files = new java.util.HashMap<>();
+                    session.parseBody(files); // <-- important
+
+                    // Get the raw body content
+                    String bodyJson = files.get("postData");
+                    if (bodyJson == null || bodyJson.isEmpty()) {
+                        return newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, "Missing request body");
+                    }
+
+                    // Deserialize JSON
+                    Map<String, Object> body = gson.fromJson(bodyJson, Map.class);
+                    if (!body.containsKey("idletimeout")){
+                        return newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, "Missing idletimeout field");
+                    }
+
+                    int idletimeout = Integer.parseInt((String) body.get("idletimeout"));
+                    SprocketAPI.apiServerWrapper.update(APIServerWrapper.Mutable.IDLETIMEOUT, idletimeout);
+
+                    return newFixedLengthResponse(Response.Status.OK, MIME_PLAINTEXT, "Idle Timeout updated to " + idletimeout);
+
+                } catch (IllegalArgumentException e){
+                    return newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, "Invalid idletimeout (Body should be : {\"idletimeout\":\"0\"})");
+                } catch (Exception e){
                     e.printStackTrace();
                     return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, "Error parsing request: " + e.getMessage());
                 }
